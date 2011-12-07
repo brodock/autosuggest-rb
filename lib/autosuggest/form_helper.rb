@@ -1,3 +1,4 @@
+require 'yajl'
 module ActionView
   module Helpers
     module FormHelper
@@ -10,7 +11,10 @@ module ActionView
         autosuggest_options[:emptyText] = I18n.t("autosuggest.emptyText")
         autosuggest_options[:limitText] = I18n.t("autosuggest.limitText")
         autosuggest_options[:addNew] = I18n.t("autosuggest.addNew")
-        
+
+        existing_tags = options[:object].send(method)
+        autosuggest_options[:preFill] = Yajl::Encoder.encode(existing_tags.map{|t| {:name => t, :value => t}})
+
         _out = text_field(object_name, method, options)
 
         # removing name attribute since values will be returned in #{object_name}[set_#{method}]
@@ -29,6 +33,9 @@ module ActionView
         options[:class] = "#{options[:class].to_s} #{text_field_class}"
         autosuggest_options = options.delete(:autosuggest_options) || {}
         autosuggest_options.reverse_merge!("queryParam" => "query", "selectedItemProp" => "name", "searchObjProps" => "name", "neverSubmit" => "true", "asHtmlName" => "#{name}")
+
+        existing_tags = options[:object].send(method)
+        autosuggest_options[:preFill] = Yajl::Encoder.encode(existing_tags.map{|r| {:name => r.name, :value => r.name}})
 
         _out = text_field_tag(name, value, options)
         _out << raw(%{
